@@ -2,7 +2,7 @@ require 'rubygems'
 require 'net/yail'
 
 HOST = 'irc.freenode.net'
-CHAN = '#reddit'
+CHAN = '#bterlsontest'
 
 class BotPlayer
   attr_reader :nick, :irc
@@ -16,7 +16,6 @@ class BotPlayer
     )
     @done = false
     @irc.prepend_handler :incoming_welcome, method(:do_connected)
-    @irc.prepend_handler :incoming_join, method(:do_joined)
     @irc.start_listening
     @nick = nick
     
@@ -39,17 +38,21 @@ class BotPlayer
     @irc.nick(@nick)
   end
   
-  def quit(message)
+  def part(message)
     @irc.part(CHAN, message)
+  end
+  
+  def quit(message)
+    @irc.quit(message)
+  end
+  
+  def join()
+    @irc.join(CHAN)
   end
   
   private
   
   def do_connected(*args)
-    @irc.join(CHAN)
-  end
-  
-  def do_joined(*args)
     @done = true
   end
 end
@@ -64,7 +67,11 @@ class BotTroupe
       when /^\[(\w+)\]\s+(.+?)$/
         kid, actor = $1, $2
         @actors[kid] = BotPlayer.new(actor)
-        puts "Join #{actor}"
+        puts "Connect #{actor}"
+      when /^\+(\w+)/
+        kid = $1
+        @actors[kid].join()
+        puts "Part #{@actors[kid].nick}"
       when /^(\w+)=\s*(.+?)$/
         kid, nick = $1, $2
         puts "#{@actors[kid].nick} is now named #{nick}"
@@ -89,7 +96,7 @@ class BotTroupe
         end
       when /^\-(\w+)\s+(.+?)$/
         kid, msg = $1, $2
-        @actors[kid].quit(msg)
+        @actors[kid].part(msg)
         puts "Exit #{@actors[kid].nick}"
       end
   rescue => e
