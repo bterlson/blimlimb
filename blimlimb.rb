@@ -1,58 +1,56 @@
-require 'rbot/rfc2812'
-require 'rbot/ircsocket'
-require 'rbot/timer'
-require 'rbot/message'
+require 'rubygems'
+require 'net/yail'
 
 HOST = 'irc.freenode.net'
-CHAN = '#stage'
-FROM = 'blim.limb'
-
-def debug(message=nil)
-  print "DEBUG: #{message}\n" if message
-end
+CHAN = '#reddit'
 
 class BotPlayer
-  attr_reader :nick, :socket, :client
+  attr_reader :nick, :irc
+  
   def initialize(nick)
-    @socket = Irc::IrcSocket.new(HOST, 6667, false)
-    @client = Irc::IrcClient.new
+    @irc = Net::YAIL.new(
+      :address    => 'irc.freenode.net',
+      :username   => nick,
+      :realname   => nick,
+      :nicknames  => [nick]
+    )
+    @done = false
+    @irc.prepend_handler :incoming_welcome, method(:do_connected)
+    @irc.prepend_handler :incoming_join, method(:do_joined)
+    @irc.start_listening
     @nick = nick
-    @client[:welcome] = proc do |data|
-      @socket.queue "JOIN #{CHAN}"
+    
+    while !@done && !@irc.dead_socket do
+      # get the connection going!
+      sleep 0.05
     end
   end
-  def connect
-    @socket.connect
-    @socket.puts "NICK #{@nick}\nUSER #{@nick} 4 #{FROM} :blimLimb, of #camping"
-    @socket.puts "JOIN #{CHAN}"
-    Thread.start(self) do |bot|
-      while true
-        while bot.socket.connected?
-          if bot.socket.select
-            break unless reply = bot.socket.gets
-            bot.client.process reply
-          end
-        end
-      end
-    end
-  end
-  def msg(type, where, message)
-    @socket.queue("#{type} #{where} :#{message}")
-  end
+  
   def say(message)
-    msg("PRIVMSG", CHAN, message)
+    @irc.msg(CHAN, message)
   end
+  
   def action(message)
-    msg("PRIVMSG", CHAN, "\001ACTION #{message}\001")
+    @irc.act(CHAN, message)
   end
+  
   def renick(name)
     @nick = name
-    @socket.queue("NICK #{@nick}")
+    @irc.nick(@nick)
   end
+  
   def quit(message)
-    @socket.puts "QUIT :#{message}"
-    @socket.flush
-    @socket.shutdown
+    @irc.part(CHAN, message)
+  end
+  
+  private
+  
+  def do_connected(*args)
+    @irc.join(CHAN)
+  end
+  
+  def do_joined(*args)
+    @done = true
   end
 end
 
@@ -66,7 +64,6 @@ class BotTroupe
       when /^\[(\w+)\]\s+(.+?)$/
         kid, actor = $1, $2
         @actors[kid] = BotPlayer.new(actor)
-        @actors[kid].connect
         puts "Join #{actor}"
       when /^(\w+)=\s*(.+?)$/
         kid, nick = $1, $2
@@ -89,7 +86,7 @@ class BotTroupe
           puppet = $stdin.gets.strip
           break if puppet =~ /^\*/
           parse puppet
-        end 
+        end
       when /^\-(\w+)\s+(.+?)$/
         kid, msg = $1, $2
         @actors[kid].quit(msg)
@@ -101,11 +98,11 @@ class BotTroupe
   def act!
     IO.foreach(@script) do |line|
       parse line
-      sleep(1+ rand(8))
+      sleep(1 + rand(8))
     end
   end
 end
-
+ 
 if __FILE__ == $0
   troupe = BotTroupe.new ARGV[0]
   troupe.act!
