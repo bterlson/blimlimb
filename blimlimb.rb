@@ -94,6 +94,10 @@ class BotTroupe
           break if puppet =~ /^\*/
           parse puppet
         end
+      when /^p\s+([\d\.]+)$/
+        secs = $1.to_f
+        puts "Pausing for #{secs} seconds."
+        sleep(secs)
       when /^\-(\w+)\s+(.+?)$/
         kid, msg = $1, $2
         @actors[kid].part(msg)
