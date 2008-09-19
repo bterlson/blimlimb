@@ -33,3 +33,6 @@
    a few logged performances
    are in `logs` to give a
    taste.
+
+   This fork requires the
+   Yail gem.
