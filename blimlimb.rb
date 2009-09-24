@@ -15,6 +15,12 @@ class BotPlayer
       :nicknames  => [nick]
     )
     @done = false
+
+    # Required otherwise Yail 1.3.1 fails
+    @irc.prepend_handler :incoming_any, proc { |text|
+      return
+    }
+
     @irc.prepend_handler :incoming_welcome, method(:do_connected)
     @irc.start_listening
     @nick = nick
