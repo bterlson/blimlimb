@@ -2,14 +2,14 @@ require 'rubygems'
 require 'net/yail'
 
 HOST = 'irc.freenode.net'
-CHAN = '#bterlsontest'
+CHAN = '#blimlimb'
 
 class BotPlayer
   attr_reader :nick, :irc
   
   def initialize(nick)
     @irc = Net::YAIL.new(
-      :address    => 'irc.freenode.net',
+      :address    => HOST,
       :username   => nick,
       :realname   => nick,
       :nicknames  => [nick]
