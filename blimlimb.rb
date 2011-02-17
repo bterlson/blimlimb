@@ -14,7 +14,7 @@ class BotPlayer
       :realname   => nick,
       :nicknames  => [nick, "#{nick}_"]
     )
-    @done = false
+    @connected = false
 
     # Required otherwise Yail 1.3.1 fails
     @irc.prepend_handler :incoming_any, proc { |text|
@@ -25,7 +25,7 @@ class BotPlayer
     @irc.start_listening
     @nick = nick
     
-    while !@done && !@irc.dead_socket do
+    while !@connected && !@irc.dead_socket do
       # get the connection going!
       sleep 0.05
     end
@@ -60,7 +60,7 @@ class BotPlayer
   private
   
   def do_connected(*args)
-    @done = true
+    @connected = true
   end
 end
 
