@@ -29,6 +29,7 @@ class BotPlayer
       # get the connection going!
       sleep 0.05
     end
+    join
   end
   
   def say(message)
@@ -74,10 +75,13 @@ class BotTroupe
         kid, actor = $1, $2
         @actors[kid] = BotPlayer.new(actor)
         puts "Connect #{actor}"
+      when /^\+\s*(\d+)/
+        puts "Wait #{$1} secs"
+        sleep $1.to_i
       when /^\+(\w+)/
         kid = $1
         @actors[kid].join()
-        puts "Part #{@actors[kid].nick}"
+        puts "Join #{@actors[kid].nick}"
       when /^(\w+)=\s*(.+?)$/
         kid, nick = $1, $2
         puts "#{@actors[kid].nick} is now named #{nick}"
@@ -90,9 +94,6 @@ class BotTroupe
         kid, msg = $1, $2
         @actors[kid].action(msg)
         puts "** #{@actors[kid].nick} #{msg}"
-      when /^\+\s*(\d+)/
-        puts "Wait #{$1} secs"
-        sleep $1.to_i
       when /^\*\s+(.+?)$/
         puts "--- okay, _why: your console - #$1 ---"
         while true
