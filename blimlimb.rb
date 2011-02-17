@@ -12,7 +12,7 @@ class BotPlayer
       :address    => HOST,
       :username   => nick,
       :realname   => nick,
-      :nicknames  => [nick]
+      :nicknames  => [nick, "#{nick}_"]
     )
     @done = false
 
