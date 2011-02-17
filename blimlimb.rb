@@ -105,10 +105,10 @@ class BotTroupe
         secs = $1.to_f
         puts "Pausing for #{secs} seconds."
         sleep(secs)
-      when /^\-(\w+)\s+(.+?)$/
+      when /^\-(\w+)(?:\s+(.+))?$/
         kid, msg = $1, $2
-        @actors[kid].part(msg)
-        puts "Exit #{@actors[kid].nick}"
+        @actors[kid].part(msg.to_s)
+        puts "Part #{@actors[kid].nick}"
       end
   rescue => e
       p e.message
