@@ -12,9 +12,9 @@ class BotPlayer
       :address    => HOST,
       :username   => nick,
       :realname   => nick,
-      :nicknames  => [nick]
+      :nicknames  => [nick, "#{nick}_"]
     )
-    @done = false
+    @connected = false
 
     # Required otherwise Yail 1.3.1 fails
     @irc.prepend_handler :incoming_any, proc { |text|
@@ -25,10 +25,11 @@ class BotPlayer
     @irc.start_listening
     @nick = nick
     
-    while !@done && !@irc.dead_socket do
+    while !@connected && !@irc.dead_socket do
       # get the connection going!
       sleep 0.05
     end
+    join
   end
   
   def say(message)
@@ -59,7 +60,7 @@ class BotPlayer
   private
   
   def do_connected(*args)
-    @done = true
+    @connected = true
   end
 end
 
@@ -74,10 +75,13 @@ class BotTroupe
         kid, actor = $1, $2
         @actors[kid] = BotPlayer.new(actor)
         puts "Connect #{actor}"
+      when /^\+\s*(\d+)/
+        puts "Wait #{$1} secs"
+        sleep $1.to_i
       when /^\+(\w+)/
         kid = $1
         @actors[kid].join()
-        puts "Part #{@actors[kid].nick}"
+        puts "Join #{@actors[kid].nick}"
       when /^(\w+)=\s*(.+?)$/
         kid, nick = $1, $2
         puts "#{@actors[kid].nick} is now named #{nick}"
@@ -90,9 +94,6 @@ class BotTroupe
         kid, msg = $1, $2
         @actors[kid].action(msg)
         puts "** #{@actors[kid].nick} #{msg}"
-      when /^\+\s*(\d+)/
-        puts "Wait #{$1} secs"
-        sleep $1.to_i
       when /^\*\s+(.+?)$/
         puts "--- okay, _why: your console - #$1 ---"
         while true
@@ -104,10 +105,10 @@ class BotTroupe
         secs = $1.to_f
         puts "Pausing for #{secs} seconds."
         sleep(secs)
-      when /^\-(\w+)\s+(.+?)$/
+      when /^\-(\w+)(?:\s+(.+))?$/
         kid, msg = $1, $2
-        @actors[kid].part(msg)
-        puts "Exit #{@actors[kid].nick}"
+        @actors[kid].part(msg.to_s)
+        puts "Part #{@actors[kid].nick}"
       end
   rescue => e
       p e.message
